@@ -19,7 +19,7 @@ SAVED_NETWORK = save_mother_dir + "/models/hybrid_sl_saved_NN/Scale-three-cut_to
     BATCH_SIZE) + "_iterate" + str(
     ITERATE_NUM) + "_lr" + str(
     learning_rate) + "_" + str(MODEL_TYPE) + "_MaxTL" + str(MAX_TRACE_LENGTH)
-DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed"
+DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-2019"
 
 DIR_GAMES_ALL = os.listdir(DATA_STORE)
 number_of_total_game = len(DIR_GAMES_ALL)
@@ -146,7 +146,7 @@ def train_network(sess, model):
             # state_trace_length, state_input, reward = compromise_state_trace_length(state_trace_length, state_input,
             #                                                                         reward, MAX_TRACE_LENGTH)
 
-            print("\n load file" + str(dir_game) + " success")
+            print("\n load file " + str(dir_game) + " success")
             reward_count = sum(reward)
             print("totoal reward: " + str(reward_count))
 

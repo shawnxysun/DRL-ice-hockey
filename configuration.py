@@ -12,4 +12,4 @@ FEATURE_TYPE = 5
 ITERATE_NUM = 30
 learning_rate = 1e-4
 SPORT = "NHL"
-save_mother_dir = "/Users/xiangyusun/Desktop/DRL-ice-hockey-saved"
+save_mother_dir = "/Users/xiangyusun/Desktop/DRL-ice-hockey-saves"
