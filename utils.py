@@ -46,14 +46,18 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
             raise IndexError("s_reward wrong with index")
         train_number += 1
         if train_number + 1 == train_len:
-            trace_length_index_t1 = s_length_t1 - 1
-            trace_length_index_t0 = s_length_t0 - 1
-            r_t0 = np.asarray([s_reward_t0[trace_length_index_t0]])
-            r_t1 = np.asarray([s_reward_t1[trace_length_index_t1]])
-            if r_t0 == [float(0)]:
+            # trace_length_index_t1 = s_length_t1 - 1
+            # trace_length_index_t0 = s_length_t0 - 1
+            # r_t0 = np.asarray([s_reward_t0[trace_length_index_t0]])
+            # r_t1 = np.asarray([s_reward_t1[trace_length_index_t1]])
+            r_t0 = s_reward_t0
+            r_t1 = s_reward_t1
+
+            if [r_t0] == [float(0)]:
                 r_t0_combine = [float(0), float(0), float(0)]
                 batch_return.append((s_t0, s_t1, r_t0_combine, s_length_t0, s_length_t1, 0, 0))
 
+                # reward  = [If_home_score, If_away_score, If_NeitherTeam_score]
                 if r_t1 == float(0):
                     r_t1_combine = [float(0), float(0), float(1)]
                 elif r_t1 == float(-1):
@@ -64,7 +68,7 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
                     raise ValueError("incorrect r_t1")
                 batch_return.append((s_t1, s_t1, r_t1_combine, s_length_t1, s_length_t1, 1, 0))
 
-            elif r_t0 == [float(-1)]:
+            elif [r_t0] == [float(-1)]:
                 r_t0_combine = [float(0), float(1), float(0)]
                 batch_return.append((s_t0, s_t1, r_t0_combine, s_length_t0, s_length_t1, 0, 0))
 
@@ -78,7 +82,7 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
                     raise ValueError("incorrect r_t1")
                 batch_return.append((s_t1, s_t1, r_t1_combine, s_length_t1, s_length_t1, 1, 0))
 
-            elif r_t0 == [float(1)]:
+            elif [r_t0] == [float(1)]:
                 r_t0_combine = [float(1), float(0), float(0)]
                 batch_return.append((s_t0, s_t1, r_t0_combine, s_length_t0, s_length_t1, 0, 0))
 
@@ -97,9 +101,13 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
             s_t0 = s_t1
             break
 
-        trace_length_index_t0 = s_length_t0 - 1
-        r_t0 = np.asarray([s_reward_t0[trace_length_index_t0]])
-        if r_t0 != [float(0)]:
+        # trace_length_index_t0 = s_length_t0 - 1
+        # r_t0 = np.asarray([s_reward_t0[trace_length_index_t0]])
+        r_t0 = s_reward_t0
+
+        # reward  = [If_home_score, If_away_score, If_NeitherTeam_score]
+        # if r_t0 != [float(0)]:
+        if [r_t0] != [float(0)]:
             # print r_t0
             if r_t0 == [float(-1)]:
                 r_t0_combine = [float(0), float(1), float(0)]
@@ -111,6 +119,7 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
                 raise ValueError("r_t0 wrong value")
             s_t0 = s_t1
             break
+            
         r_t0_combine = [float(0), float(0), float(0)]
         batch_return.append((s_t0, s_t1, r_t0_combine, s_length_t0, s_length_t1, 0, 0))
         current_batch_length += 1
