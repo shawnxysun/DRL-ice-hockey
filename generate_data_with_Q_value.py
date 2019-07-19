@@ -1,3 +1,4 @@
+import datetime
 import tensorflow as tf
 import os
 import scipy.io as sio
@@ -21,16 +22,19 @@ DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-20
 DIR_GAMES_ALL = os.listdir(DATA_STORE)
 
 def write_Q_data_txt(fileWriter, Q_values, state_features):
-    for event_index in range(0, len(Q_values)):
-        Q_value = str(Q_values[event_index][0]).strip() # only the Q_home for now
+    current_batch_size = len(Q_values)
+    for batch_index in range(0, current_batch_size):
+        Q_value = str(Q_values[batch_index][0]).strip() # only the Q_home for now
 
         # flat the state features of all histories
         state_feature = ''
-        for history_index in range(0, len(state_features[event_index])):
-            for feature_index in range(0, len(state_features[event_index][history_index])):
-                state_feature = state_feature + str(state_features[event_index][history_index][feature_index]).strip() + ' '
+        for history_index in range(0, len(state_features[batch_index])):
+            for feature_index in range(0, len(state_features[batch_index][history_index])):
+                state_feature = state_feature + str(state_features[batch_index][history_index][feature_index]).strip() + ' '
 
-        # write a line
+        # TODO : state features are standarized before training, need to unstandarize them for mimic learning
+
+        # write a line [Q, state_feature_1_history_1, state_feature_2_history_1, ..., state_feature_1_history_10, state_feature_2_history_10]
         fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
 
 def generate(sess, model, fileWriter):
@@ -121,6 +125,7 @@ def generation_start(fileWriter):
 
 
 if __name__ == '__main__':
-    fileWriter = open(Q_data_DIR + '/generated_data.txt', 'w')
+    timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    fileWriter = open(Q_data_DIR + '/sportlogiq_data_' + str(timestamp) + '.txt', 'w')
     generation_start(fileWriter)
     fileWriter.close()
