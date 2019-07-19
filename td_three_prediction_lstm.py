@@ -76,6 +76,8 @@ def train_network(sess, model):
     merge = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(LOG_DIR, sess.graph)
     sess.run(tf.global_variables_initializer())
+
+    checkpoint = None
     if model_train_continue:
         checkpoint = tf.train.get_checkpoint_state(SAVED_NETWORK)
         if checkpoint and checkpoint.model_checkpoint_path:
@@ -114,6 +116,9 @@ def train_network(sess, model):
             v_diff_record = []
             game_number += 1
             game_cost_record = []
+
+            # TODO : need to add action to state_input
+
             game_files = os.listdir(DATA_STORE + "/" + dir_game)
             for filename in game_files:
                 # if "dynamic_rnn_reward" in filename:
@@ -133,6 +138,7 @@ def train_network(sess, model):
             except:
                 print("\n" + dir_game)
                 raise ValueError("reward wrong")
+
             state_input = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + state_input_name)
             # state_input = (state_input['dynamic_feature_input'])
             state_input = (state_input['state_feature_seq'])
@@ -146,9 +152,9 @@ def train_network(sess, model):
             # state_trace_length, state_input, reward = compromise_state_trace_length(state_trace_length, state_input,
             #                                                                         reward, MAX_TRACE_LENGTH)
 
-            print("\n load file " + str(dir_game) + " success")
-            reward_count = sum(reward)
-            print("totoal reward: " + str(reward_count))
+            print("\n loaded files in folder " + str(dir_game) + " successfully")
+            total_reward = sum(reward)
+            print("totoal reward: " + str(total_reward))
 
             if len(state_input) != len(reward) or len(state_trace_length) != len(reward):
                 raise Exception('state length does not equal to reward length')
@@ -171,10 +177,12 @@ def train_network(sess, model):
                 trace_t1_batch = [d[4] for d in batch_return]
                 y_batch = []
 
+                # readout_t1_batch is the Q value of next state 
                 [outputs_t1, readout_t1_batch] = sess.run(
                     [model.outputs, model.read_out], 
-                    feed_dict={model.trace_lengths: trace_t1_batch,model.rnn_input: s_t1_batch})
+                    feed_dict={model.trace_lengths: trace_t1_batch, model.rnn_input: s_t1_batch})
 
+                # calculate target Q value: reward + Q(St+1)
                 for i in range(0, len(batch_return)):
                     terminal = batch_return[i][5]
                     cut = batch_return[i][6]

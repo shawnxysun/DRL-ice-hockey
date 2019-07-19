@@ -12,4 +12,5 @@ FEATURE_TYPE = 5
 ITERATE_NUM = 30
 learning_rate = 1e-4
 SPORT = "NHL"
+directory_generated_Q_data = "Q_data"
 save_mother_dir = "/Users/xiangyusun/Desktop/DRL-ice-hockey-saves"
