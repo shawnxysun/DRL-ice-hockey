@@ -117,8 +117,6 @@ def train_network(sess, model):
             game_number += 1
             game_cost_record = []
 
-            # TODO : need to add action to state_input
-
             game_files = os.listdir(DATA_STORE + "/" + dir_game)
             for filename in game_files:
                 # if "dynamic_rnn_reward" in filename:
@@ -127,6 +125,8 @@ def train_network(sess, model):
                 # elif "dynamic_rnn_input" in filename:
                 elif "state_feature_seq" in filename:
                     state_input_name = filename
+                elif "action_feature_seq" in filename:
+                    action_input_name = filename
                 # elif "trace" in filename:
                 elif "lt" in filename:
                     state_trace_length_name = filename
@@ -142,6 +142,10 @@ def train_network(sess, model):
             state_input = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + state_input_name)
             # state_input = (state_input['dynamic_feature_input'])
             state_input = (state_input['state_feature_seq'])
+
+            action_input = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + action_input_name)
+            action_input = (action_input['action_feature_seq'])
+
             state_trace_length = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + state_trace_length_name)
             # state_trace_length = (state_trace_length['hybrid_trace_length'])[0]
             state_trace_length = (state_trace_length['lt'])[0]
@@ -156,18 +160,19 @@ def train_network(sess, model):
             total_reward = sum(reward)
             print("totoal reward: " + str(total_reward))
 
-            if len(state_input) != len(reward) or len(state_trace_length) != len(reward):
-                raise Exception('state length does not equal to reward length')
+            if len(state_input) != len(reward) or len(action_input) != len(reward) or len(state_trace_length) != len(reward):
+                raise Exception('state/action length does not equal to reward length')
 
             train_len = len(state_input)
             train_number = 0
-            s_t0 = state_input[train_number]
+            # state representation is [state_features, one-hot-action]
+            s_t0 = np.concatenate((state_input[train_number], action_input[train_number]), axis=1)
             train_number += 1
 
             while True:
                 # try:
                 batch_return, train_number, s_tl = get_together_training_batch(s_t0,
-                state_input,reward,train_number,train_len,state_trace_length,BATCH_SIZE)
+                state_input,action_input,reward,train_number,train_len,state_trace_length,BATCH_SIZE)
 
                 # get the batch variables
                 s_t0_batch = [d[0] for d in batch_return]

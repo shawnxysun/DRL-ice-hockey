@@ -15,7 +15,7 @@ def handle_trace_length(state_trace_length):
     return trace_length_record
 
 
-def get_together_training_batch(s_t0, state_input, reward, train_number, train_len, state_trace_length, BATCH_SIZE):
+def get_together_training_batch(s_t0, state_input, action_input, reward, train_number, train_len, state_trace_length, BATCH_SIZE):
     """
     we generate the training batch, your can write your own method.
     in our dataset, 1 means home score, -1 means away score, we transfer it to one-hot representation:
@@ -28,7 +28,7 @@ def get_together_training_batch(s_t0, state_input, reward, train_number, train_l
     batch_return = []
     current_batch_length = 0
     while current_batch_length < BATCH_SIZE:
-        s_t1 = state_input[train_number]
+        s_t1 = np.concatenate((state_input[train_number], action_input[train_number]), axis=1)
         if len(s_t1) < 10 or len(s_t0) < 10:
             raise ValueError("wrong length of s")
             # train_number += 1

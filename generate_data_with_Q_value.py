@@ -19,6 +19,10 @@ Q_data_DIR = save_mother_dir + '/' + directory_generated_Q_data
 
 DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-2019"
 
+# read mean and variance for unstandarization
+MEAN_FILE = DATA_STORE + '/feature_mean.txt'
+VAR_FILE = DATA_STORE + '/feature_var.txt'
+
 DIR_GAMES_ALL = os.listdir(DATA_STORE)
 
 def write_Q_data_txt(fileWriter, Q_values, state_features):
@@ -34,7 +38,7 @@ def write_Q_data_txt(fileWriter, Q_values, state_features):
 
         # TODO : state features are standarized before training, need to unstandarize them for mimic learning
 
-        # write a line [Q, state_feature_1_history_1, state_feature_2_history_1, ..., state_feature_1_history_10, state_feature_2_history_10]
+        # write a line [Q, state_features_history_1, one_hot_action_history_1, ..., state_features_history_10, one_hot_action_history_10]
         fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
 
 def generate(sess, model, fileWriter):
@@ -56,8 +60,6 @@ def generate(sess, model, fileWriter):
         if dir_game == '.DS_Store':
             continue
 
-        # TODO : need to add action to state_input
-
         # find data file names
         game_files = os.listdir(DATA_STORE + "/" + dir_game)
         for filename in game_files:
@@ -65,6 +67,8 @@ def generate(sess, model, fileWriter):
                 reward_name = filename
             elif "state_feature_seq" in filename:
                 state_input_name = filename
+            elif "action_feature_seq" in filename:
+                    action_input_name = filename
             elif "lt" in filename:
                 state_trace_length_name = filename
 
@@ -74,22 +78,26 @@ def generate(sess, model, fileWriter):
         state_input = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + state_input_name)
         state_input = (state_input['state_feature_seq'])
 
+        action_input = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + action_input_name)
+        action_input = (action_input['action_feature_seq'])
+
         state_trace_length = sio.loadmat(DATA_STORE + "/" + dir_game + "/" + state_trace_length_name)
         state_trace_length = (state_trace_length['lt'])[0]
 
         print("\n loaded files in folder " + str(dir_game) + " successfully")
 
-        if len(state_input) != len(reward) or len(state_trace_length) != len(reward):
-            raise Exception('state length does not equal to reward length')
+        if len(state_input) != len(reward) or len(action_input) != len(reward) or len(state_trace_length) != len(reward):
+                raise Exception('state/action length does not equal to reward length')
 
         train_len = len(state_input)
         train_number = 0
-        s_t0 = state_input[train_number]
+        # state representation is [state_features, one-hot-action]
+        s_t0 = np.concatenate((state_input[train_number], action_input[train_number]), axis=1)
         train_number += 1
 
         while True:
             batch_return, train_number, s_tl = get_together_training_batch(s_t0,
-            state_input,reward,train_number,train_len,state_trace_length,BATCH_SIZE)
+            state_input,action_input,reward,train_number,train_len,state_trace_length,BATCH_SIZE)
 
             # get the batch variables
             s_t0_batch = [d[0] for d in batch_return]
@@ -111,9 +119,6 @@ def generate(sess, model, fileWriter):
                 break
 
 def generation_start(fileWriter):
-    if not os.path.isdir(Q_data_DIR):
-        os.mkdir(Q_data_DIR)
-
     sess = tf.InteractiveSession()
     if MODEL_TYPE == "v3":
         nn = td_prediction_lstm_V3(FEATURE_NUMBER, H_SIZE, MAX_TRACE_LENGTH, learning_rate)
@@ -125,6 +130,26 @@ def generation_start(fileWriter):
 
 
 if __name__ == '__main__':
+    if not os.path.isdir(Q_data_DIR):
+        os.mkdir(Q_data_DIR)
+
+    # read mean and variance for unstandarization
+    meanFileReader = open(MEAN_FILE, 'r')
+    mean_str = meanFileReader.read().split(' ')
+    meanFileReader.close()
+
+    varFileReader = open(VAR_FILE, 'r')
+    var_str = varFileReader.read().split(' ')
+    varFileReader.close()
+
+    means = []
+    variances = []
+    for i in range(0, FEATURE_NUMBER): # both mean and variance files have state_features + one_hot_action
+        means.append(float(mean_str[i]))
+        variances.append(float(var_str[i]))
+    
+    # TODO : need to modify the generated mean and variance files in preprocess.py, there are many zeros
+
     timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     fileWriter = open(Q_data_DIR + '/sportlogiq_data_' + str(timestamp) + '.txt', 'w')
     generation_start(fileWriter)
