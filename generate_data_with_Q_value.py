@@ -56,8 +56,8 @@ def generate(sess, model, fileWriter):
     # generate data with Q vaules using data from all subfolders in processed data folder
     for dir_game in DIR_GAMES_ALL:
 
-        # skip the hidden mac file
-        if dir_game == '.DS_Store':
+        # skip the hidden mac file, feature_var.txt and feature_mean.txt
+        if dir_game == '.DS_Store' or "feature_var" in dir_game or "feature_mean" in dir_game:
             continue
 
         # find data file names
