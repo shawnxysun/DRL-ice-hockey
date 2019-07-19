@@ -10,7 +10,7 @@ from configuration import MODEL_TYPE, MAX_TRACE_LENGTH, FEATURE_NUMBER, BATCH_SI
     model_train_continue, FEATURE_TYPE, ITERATE_NUM, learning_rate, SPORT, directory_generated_Q_data, \
     save_mother_dir, action_all
 
-ACTION_TO_MIMIC = 'assist'
+ACTION_TO_MIMIC = 'pass'
 
 SAVED_NETWORK = save_mother_dir + "/models/hybrid_sl_saved_NN/Scale-three-cut_together_saved_networks_feature" + str(
     FEATURE_TYPE) + "_batch" + str(
@@ -37,43 +37,40 @@ def write_Q_data_txt(fileWriter, Q_values, state_features, action_index):
     for batch_index in range(0, current_batch_size):
         Q_value = str(Q_values[batch_index][0]).strip() # only the Q_home for now
 
-        # only consider HOME (index 9) for now
-        if state_features[batch_index][0][9] > 0:
+        # the first 12 elements are state features
+        action_index_in_feature = 12 + action_index
 
-            # the first 12 elements are state features
-            action_index_in_feature = 12 + action_index
+        # generate the data only if the action of the current state is what we want
+        if state_features[batch_index][0][action_index_in_feature] > 0:
 
-            # generate the data only if the action of the current state is what we want
-            if state_features[batch_index][0][action_index_in_feature] > 0:
+            # flat the state features of all histories
+            state_feature = ''
+            for history_index in range(0, len(state_features[batch_index])):
+            # for history_index in range(0, 1): # only consider the curent state
+                for feature_index in range(0, len(state_features[batch_index][history_index])):
+                    # ignore actions of current state, since we only generate data for 1 action
+                    if history_index == 0 and feature_index >= 12 and feature_index <= 44:
+                        continue
 
-                # flat the state features of all histories
-                state_feature = ''
-                # for history_index in range(0, len(state_features[batch_index])):
-                for history_index in range(0, 1): # only consider the curent state
-                    for feature_index in range(0, len(state_features[batch_index][history_index])):
-                        # ignore actions of current state, since we only generate data for 1 action
-                        if history_index == 0 and feature_index >= 12 and feature_index <= 44:
-                            continue
+                    # # ignore home_away one hot of current state
+                    # if history_index == 0 and feature_index >= 9 and feature_index <= 10:
+                    #     continue
+                    
+                    state_feature_value = state_features[batch_index][history_index][feature_index]
 
-                        # ignore home_away one hot of current state
-                        if history_index == 0 and feature_index >= 9 and feature_index <= 10:
-                            continue
-                        
-                        state_feature_value = state_features[batch_index][history_index][feature_index]
+                    # check if it is action and change action to one-hot
+                    if (feature_index - 12 - 33) % 45 >= 12 and (feature_index - 12 - 33) % 45 <= 44: 
+                        if state_features[batch_index][history_index][feature_index] > 0:
+                            state_feature_value = 1
+                        else:
+                            state_feature_value = 0
 
-                        # # check if it is action
-                        # if (feature_index-12-33) % 45 >= 12 and (feature_index-12-33) % 45 <= 44: 
-                        #     if state_features[batch_index][history_index][feature_index] > 0:
-                        #         state_feature_value = 1
-                        #     else:
-                        #         state_feature_value = 0
+                    state_feature = state_feature + str(state_feature_value).strip() + ' '
 
-                        state_feature = state_feature + str(state_feature_value).strip() + ' '
+            # TODO : state features are standarized before training, need to unstandarize them for mimic learning
 
-                # TODO : state features are standarized before training, need to unstandarize them for mimic learning
-
-                # write a line [Q, state_features_history_1, state_features_history_2, one_hot_action_history_2, ..., state_features_history_10, one_hot_action_history_10]
-                fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
+            # write a line [Q, state_features_history_1, state_features_history_2, one_hot_action_history_2, ..., state_features_history_10, one_hot_action_history_10]
+            fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
 
 def generate(sess, model, fileWriter, action_index):
     # loading network
@@ -166,11 +163,10 @@ def generete_data_description_file():
     descriptionFileWriter = open(Q_data_DIR + '/' + data_description_file_name, 'w')
     # 3: data file name, NA, which line to start with
     # 1: Q
-    # 12: the state features of current state, ignore actions
+    # 12: the state features of 1st state, ignore actions
     # 45 * 9: (state features + one hot action) * 9 histories
-    # 2: ingore home_away one hot
-    # for line in range(0, 3 + 1 + 12 + 45 * 9):
-    for line in range(0, 3 + 1 + 12 - 2):
+    history_count = 0
+    for line in range(0, 3 + 1 + 12 + 45 * 9):
         if line == 0:
             descriptionFileWriter.write(data_file_name + '\n')
         elif line == 1:
@@ -179,31 +175,35 @@ def generete_data_description_file():
             descriptionFileWriter.write('1\n')
         elif line == 3:
             descriptionFileWriter.write('1 Q d\n')
-        elif line == 4:
-            descriptionFileWriter.write('2 xAdjCoord n\n')
-        elif line == 5:
-            descriptionFileWriter.write('3 yAdjCoord n\n')
-        elif line == 6:
-            descriptionFileWriter.write('4 scoreDifferential n\n')
-        elif line == 7:
-             descriptionFileWriter.write('5 manpowerSituation c\n')
-        elif line == 8:
-             descriptionFileWriter.write('6 outcome c\n')
-        elif line == 9:
-             descriptionFileWriter.write('7 velocity_x n\n')
-        elif line == 10:
-             descriptionFileWriter.write('8 velocity_y n\n')
-        elif line == 11:
-             descriptionFileWriter.write('9 time_remain n\n')
-        elif line == 12:
-             descriptionFileWriter.write('10 duration n\n')
-        #  ignore home_away of current state
-        # elif line == 13:
-        #      descriptionFileWriter.write('11 home c\n')
-        # elif line == 14:
-        #      descriptionFileWriter.write('12 away c\n')
-        elif line == 13:
-             descriptionFileWriter.write('11 angle2gate n\n')
+        elif line == 4 or line == 16 or (line - 3 - 1 - 12 - 45) % 45 == 0:
+            history_count += 1
+            descriptionFileWriter.write(str(line - 2) + ' xAdjCoord' + str(history_count) + ' n\n')
+        elif line == 5 or line == 17 or (line - 3 - 1 - 12 - 45) % 45 == 1:
+            descriptionFileWriter.write(str(line - 2) + ' yAdjCoord' + str(history_count) + ' n\n')
+        elif line == 6 or line == 18 or (line - 3 - 1 - 12 - 45) % 45 == 2:
+            descriptionFileWriter.write(str(line - 2) + ' scoreDifferential' + str(history_count) + ' n\n')
+        elif line == 7 or line == 19 or (line - 3 - 1 - 12 - 45) % 45 == 3:
+             descriptionFileWriter.write(str(line - 2) + ' manpowerSituation' + str(history_count) + ' c\n')
+        elif line == 8 or line == 20 or (line - 3 - 1 - 12 - 45) % 45 == 4:
+             descriptionFileWriter.write(str(line - 2) + ' outcome' + str(history_count) + ' c\n')
+        elif line == 9 or line == 21 or (line - 3 - 1 - 12 - 45) % 45 == 5:
+             descriptionFileWriter.write(str(line - 2) + ' velocity_x' + str(history_count) + ' n\n')
+        elif line == 10 or line == 22 or (line - 3 - 1 - 12 - 45) % 45 == 6:
+             descriptionFileWriter.write(str(line - 2) + ' velocity_y' + str(history_count) + ' n\n')
+        elif line == 11 or line == 23 or (line - 3 - 1 - 12 - 45) % 45 == 7:
+             descriptionFileWriter.write(str(line - 2) + ' time_remain' + str(history_count) + ' n\n')
+        elif line == 12 or line == 24 or (line - 3 - 1 - 12 - 45) % 45 == 8:
+             descriptionFileWriter.write(str(line - 2) + ' duration' + str(history_count) + ' n\n')
+        elif line == 13 or line == 25 or (line - 3 - 1 - 12 - 45) % 45 == 9:
+             descriptionFileWriter.write(str(line - 2) + ' home' + str(history_count) + ' c\n')
+        elif line == 14 or line == 26 or (line - 3 - 1 - 12 - 45) % 45 == 10:
+             descriptionFileWriter.write(str(line - 2) + ' away' + str(history_count) + ' c\n')
+        elif line == 15 or line == 27 or (line - 3 - 1 - 12 - 45) % 45 == 11:
+             descriptionFileWriter.write(str(line - 2) + ' angle2gate' + str(history_count) + ' n\n')
+        else: # actions
+            index = (line - 3 - 1 - 12 - 12) % 45
+            action = action_all[index]
+            descriptionFileWriter.write(str(line - 2) + ' ' + action + str(history_count) + ' c\n')
 
     descriptionFileWriter.close()
 
