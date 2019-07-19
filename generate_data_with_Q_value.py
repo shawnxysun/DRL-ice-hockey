@@ -7,7 +7,10 @@ from nn.td_prediction_lstm_V3 import td_prediction_lstm_V3
 from nn.td_prediction_lstm_V4 import td_prediction_lstm_V4
 from utils import handle_trace_length, get_together_training_batch, compromise_state_trace_length
 from configuration import MODEL_TYPE, MAX_TRACE_LENGTH, FEATURE_NUMBER, BATCH_SIZE, GAMMA, H_SIZE, \
-    model_train_continue, FEATURE_TYPE, ITERATE_NUM, learning_rate, SPORT, directory_generated_Q_data, save_mother_dir
+    model_train_continue, FEATURE_TYPE, ITERATE_NUM, learning_rate, SPORT, directory_generated_Q_data, \
+    save_mother_dir, action_all
+
+ACTION_TO_MIMIC = 'assist'
 
 SAVED_NETWORK = save_mother_dir + "/models/hybrid_sl_saved_NN/Scale-three-cut_together_saved_networks_feature" + str(
     FEATURE_TYPE) + "_batch" + str(
@@ -19,29 +22,60 @@ Q_data_DIR = save_mother_dir + '/' + directory_generated_Q_data
 
 DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-2019"
 
+DIR_GAMES_ALL = os.listdir(DATA_STORE)
+
+timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+data_file_name = 'sportlogiq_data_' + ACTION_TO_MIMIC + '_' + str(timestamp) + '.txt'
+data_description_file_name = 'sportlogiq_data_description_' + ACTION_TO_MIMIC + '_' + str(timestamp) + '.txt'
+
 # read mean and variance for unstandarization
 MEAN_FILE = DATA_STORE + '/feature_mean.txt'
 VAR_FILE = DATA_STORE + '/feature_var.txt'
 
-DIR_GAMES_ALL = os.listdir(DATA_STORE)
-
-def write_Q_data_txt(fileWriter, Q_values, state_features):
+def write_Q_data_txt(fileWriter, Q_values, state_features, action_index):
     current_batch_size = len(Q_values)
     for batch_index in range(0, current_batch_size):
         Q_value = str(Q_values[batch_index][0]).strip() # only the Q_home for now
 
-        # flat the state features of all histories
-        state_feature = ''
-        for history_index in range(0, len(state_features[batch_index])):
-            for feature_index in range(0, len(state_features[batch_index][history_index])):
-                state_feature = state_feature + str(state_features[batch_index][history_index][feature_index]).strip() + ' '
+        # only consider HOME (index 9) for now
+        if state_features[batch_index][0][9] > 0:
 
-        # TODO : state features are standarized before training, need to unstandarize them for mimic learning
+            # the first 12 elements are state features
+            action_index_in_feature = 12 + action_index
 
-        # write a line [Q, state_features_history_1, one_hot_action_history_1, ..., state_features_history_10, one_hot_action_history_10]
-        fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
+            # generate the data only if the action of the current state is what we want
+            if state_features[batch_index][0][action_index_in_feature] > 0:
 
-def generate(sess, model, fileWriter):
+                # flat the state features of all histories
+                state_feature = ''
+                # for history_index in range(0, len(state_features[batch_index])):
+                for history_index in range(0, 1): # only consider the curent state
+                    for feature_index in range(0, len(state_features[batch_index][history_index])):
+                        # ignore actions of current state, since we only generate data for 1 action
+                        if history_index == 0 and feature_index >= 12 and feature_index <= 44:
+                            continue
+
+                        # ignore home_away one hot of current state
+                        if history_index == 0 and feature_index >= 9 and feature_index <= 10:
+                            continue
+                        
+                        state_feature_value = state_features[batch_index][history_index][feature_index]
+
+                        # # check if it is action
+                        # if (feature_index-12-33) % 45 >= 12 and (feature_index-12-33) % 45 <= 44: 
+                        #     if state_features[batch_index][history_index][feature_index] > 0:
+                        #         state_feature_value = 1
+                        #     else:
+                        #         state_feature_value = 0
+
+                        state_feature = state_feature + str(state_feature_value).strip() + ' '
+
+                # TODO : state features are standarized before training, need to unstandarize them for mimic learning
+
+                # write a line [Q, state_features_history_1, state_features_history_2, one_hot_action_history_2, ..., state_features_history_10, one_hot_action_history_10]
+                fileWriter.write(Q_value.strip() + ' ' + state_feature.strip() + '\n')
+
+def generate(sess, model, fileWriter, action_index):
     # loading network
     saver = tf.train.Saver()
     sess.run(tf.global_variables_initializer())
@@ -111,14 +145,14 @@ def generate(sess, model, fileWriter):
                     model.trace_lengths: trace_t0_batch,
                     model.rnn_input: s_t0_batch})
 
-            write_Q_data_txt(fileWriter, Q_values, s_t0_batch)
+            write_Q_data_txt(fileWriter, Q_values, s_t0_batch, action_index)
 
             s_t0 = s_tl
 
             if terminal:
                 break
 
-def generation_start(fileWriter):
+def generation_start(fileWriter, action_index):
     sess = tf.InteractiveSession()
     if MODEL_TYPE == "v3":
         nn = td_prediction_lstm_V3(FEATURE_NUMBER, H_SIZE, MAX_TRACE_LENGTH, learning_rate)
@@ -126,8 +160,52 @@ def generation_start(fileWriter):
         nn = td_prediction_lstm_V4(FEATURE_NUMBER, H_SIZE, MAX_TRACE_LENGTH, learning_rate)
     else:
         raise ValueError("MODEL_TYPE error")
-    generate(sess, nn, fileWriter)
+    generate(sess, nn, fileWriter, action_index)
 
+def generete_data_description_file():
+    descriptionFileWriter = open(Q_data_DIR + '/' + data_description_file_name, 'w')
+    # 3: data file name, NA, which line to start with
+    # 1: Q
+    # 12: the state features of current state, ignore actions
+    # 45 * 9: (state features + one hot action) * 9 histories
+    # 2: ingore home_away one hot
+    # for line in range(0, 3 + 1 + 12 + 45 * 9):
+    for line in range(0, 3 + 1 + 12 - 2):
+        if line == 0:
+            descriptionFileWriter.write(data_file_name + '\n')
+        elif line == 1:
+            descriptionFileWriter.write('NA\n')
+        elif line ==2:
+            descriptionFileWriter.write('1\n')
+        elif line == 3:
+            descriptionFileWriter.write('1 Q d\n')
+        elif line == 4:
+            descriptionFileWriter.write('2 xAdjCoord n\n')
+        elif line == 5:
+            descriptionFileWriter.write('3 yAdjCoord n\n')
+        elif line == 6:
+            descriptionFileWriter.write('4 scoreDifferential n\n')
+        elif line == 7:
+             descriptionFileWriter.write('5 manpowerSituation c\n')
+        elif line == 8:
+             descriptionFileWriter.write('6 outcome c\n')
+        elif line == 9:
+             descriptionFileWriter.write('7 velocity_x n\n')
+        elif line == 10:
+             descriptionFileWriter.write('8 velocity_y n\n')
+        elif line == 11:
+             descriptionFileWriter.write('9 time_remain n\n')
+        elif line == 12:
+             descriptionFileWriter.write('10 duration n\n')
+        #  ignore home_away of current state
+        # elif line == 13:
+        #      descriptionFileWriter.write('11 home c\n')
+        # elif line == 14:
+        #      descriptionFileWriter.write('12 away c\n')
+        elif line == 13:
+             descriptionFileWriter.write('11 angle2gate n\n')
+
+    descriptionFileWriter.close()
 
 if __name__ == '__main__':
     if not os.path.isdir(Q_data_DIR):
@@ -150,7 +228,11 @@ if __name__ == '__main__':
     
     # TODO : need to modify the generated mean and variance files in preprocess.py, there are many zeros
 
-    timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    fileWriter = open(Q_data_DIR + '/sportlogiq_data_' + str(timestamp) + '.txt', 'w')
-    generation_start(fileWriter)
+    generete_data_description_file()
+
+    # the generated Q data file only contains data which has action 'ACTION_TO_MIMIC'
+    action_index = action_all.index(ACTION_TO_MIMIC)
+
+    fileWriter = open(Q_data_DIR + '/' + data_file_name, 'w')
+    generation_start(fileWriter, action_index)
     fileWriter.close()
