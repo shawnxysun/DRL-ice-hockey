@@ -20,7 +20,8 @@ SAVED_NETWORK = save_mother_dir + "/models/hybrid_sl_saved_NN/Scale-three-cut_to
 
 Q_data_DIR = save_mother_dir + '/' + directory_generated_Q_data
 
-DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-2019"
+# DATA_STORE = "/Users/xiangyusun/Desktop/2019-icehockey-data-preprocessed/2018-2019"
+DATA_STORE = "/cs/oschulte/xiangyus/2019-icehockey-data-preprocessed/2018-2019"
 
 DIR_GAMES_ALL = os.listdir(DATA_STORE)
 
@@ -29,8 +30,8 @@ data_file_name = 'sportlogiq_data_' + ACTION_TO_MIMIC + '_' + str(timestamp) + '
 data_description_file_name = 'sportlogiq_data_description_' + ACTION_TO_MIMIC + '_' + str(timestamp) + '.txt'
 
 # read mean and variance for unstandarization
-MEAN_FILE = DATA_STORE + '/feature_mean.txt'
-VAR_FILE = DATA_STORE + '/feature_var.txt'
+# MEAN_FILE = DATA_STORE + '/feature_mean.txt'
+# VAR_FILE = DATA_STORE + '/feature_var.txt'
 
 def write_Q_data_txt(fileWriter, Q_values, state_features, action_index):
     current_batch_size = len(Q_values)
@@ -211,20 +212,20 @@ if __name__ == '__main__':
     if not os.path.isdir(Q_data_DIR):
         os.mkdir(Q_data_DIR)
 
-    # read mean and variance for unstandarization
-    meanFileReader = open(MEAN_FILE, 'r')
-    mean_str = meanFileReader.read().split(' ')
-    meanFileReader.close()
+    # # read mean and variance for unstandarization
+    # meanFileReader = open(MEAN_FILE, 'r')
+    # mean_str = meanFileReader.read().split(' ')
+    # meanFileReader.close()
 
-    varFileReader = open(VAR_FILE, 'r')
-    var_str = varFileReader.read().split(' ')
-    varFileReader.close()
+    # varFileReader = open(VAR_FILE, 'r')
+    # var_str = varFileReader.read().split(' ')
+    # varFileReader.close()
 
-    means = []
-    variances = []
-    for i in range(0, FEATURE_NUMBER): # both mean and variance files have state_features + one_hot_action
-        means.append(float(mean_str[i]))
-        variances.append(float(var_str[i]))
+    # means = []
+    # variances = []
+    # for i in range(0, FEATURE_NUMBER): # both mean and variance files have state_features + one_hot_action
+    #     means.append(float(mean_str[i]))
+    #     variances.append(float(var_str[i]))
     
     # TODO : need to modify the generated mean and variance files in preprocess.py, there are many zeros
 
