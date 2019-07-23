@@ -184,9 +184,9 @@ def generete_data_description_file():
         elif line == 6 or line == 18 or (line - 3 - 1 - 12 - 45) % 45 == 2:
             descriptionFileWriter.write(str(line - 2) + ' scoreDifferential' + str(history_count) + ' n\n')
         elif line == 7 or line == 19 or (line - 3 - 1 - 12 - 45) % 45 == 3:
-             descriptionFileWriter.write(str(line - 2) + ' manpowerSituation' + str(history_count) + ' c\n')
+             descriptionFileWriter.write(str(line - 2) + ' manpowerSituation' + str(history_count) + ' b\n')
         elif line == 8 or line == 20 or (line - 3 - 1 - 12 - 45) % 45 == 4:
-             descriptionFileWriter.write(str(line - 2) + ' outcome' + str(history_count) + ' c\n')
+             descriptionFileWriter.write(str(line - 2) + ' outcome' + str(history_count) + ' b\n')
         elif line == 9 or line == 21 or (line - 3 - 1 - 12 - 45) % 45 == 5:
              descriptionFileWriter.write(str(line - 2) + ' velocity_x' + str(history_count) + ' n\n')
         elif line == 10 or line == 22 or (line - 3 - 1 - 12 - 45) % 45 == 6:
@@ -196,15 +196,15 @@ def generete_data_description_file():
         elif line == 12 or line == 24 or (line - 3 - 1 - 12 - 45) % 45 == 8:
              descriptionFileWriter.write(str(line - 2) + ' duration' + str(history_count) + ' n\n')
         elif line == 13 or line == 25 or (line - 3 - 1 - 12 - 45) % 45 == 9:
-             descriptionFileWriter.write(str(line - 2) + ' home' + str(history_count) + ' c\n')
+             descriptionFileWriter.write(str(line - 2) + ' home' + str(history_count) + ' b\n')
         elif line == 14 or line == 26 or (line - 3 - 1 - 12 - 45) % 45 == 10:
-             descriptionFileWriter.write(str(line - 2) + ' away' + str(history_count) + ' c\n')
+             descriptionFileWriter.write(str(line - 2) + ' away' + str(history_count) + ' b\n')
         elif line == 15 or line == 27 or (line - 3 - 1 - 12 - 45) % 45 == 11:
              descriptionFileWriter.write(str(line - 2) + ' angle2gate' + str(history_count) + ' n\n')
         else: # actions
             index = (line - 3 - 1 - 12 - 12) % 45
             action = action_all[index]
-            descriptionFileWriter.write(str(line - 2) + ' ' + action + str(history_count) + ' c\n')
+            descriptionFileWriter.write(str(line - 2) + ' ' + action + str(history_count) + ' b\n')
 
     descriptionFileWriter.close()
 
