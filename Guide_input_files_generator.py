@@ -176,30 +176,30 @@ def generete_data_description_file():
             descriptionFileWriter.write('1\n')
         elif line == 3:
             descriptionFileWriter.write('1 Q d\n')
-        elif line == 4 or line == 16 or (line - 3 - 1 - 12 - 45) % 45 == 0:
+        elif line == 4 or (line - 3 - 1 - 12) % 45 == 0:
             history_count += 1
             descriptionFileWriter.write(str(line - 2) + ' xAdjCoord' + str(history_count) + ' n\n')
-        elif line == 5 or line == 17 or (line - 3 - 1 - 12 - 45) % 45 == 1:
+        elif line == 5 or (line - 3 - 1 - 12) % 45 == 1:
             descriptionFileWriter.write(str(line - 2) + ' yAdjCoord' + str(history_count) + ' n\n')
-        elif line == 6 or line == 18 or (line - 3 - 1 - 12 - 45) % 45 == 2:
+        elif line == 6 or (line - 3 - 1 - 12) % 45 == 2:
             descriptionFileWriter.write(str(line - 2) + ' scoreDifferential' + str(history_count) + ' n\n')
-        elif line == 7 or line == 19 or (line - 3 - 1 - 12 - 45) % 45 == 3:
+        elif line == 7 or (line - 3 - 1 - 12) % 45 == 3:
              descriptionFileWriter.write(str(line - 2) + ' manpowerSituation' + str(history_count) + ' b\n')
-        elif line == 8 or line == 20 or (line - 3 - 1 - 12 - 45) % 45 == 4:
+        elif line == 8 or (line - 3 - 1 - 12) % 45 == 4:
              descriptionFileWriter.write(str(line - 2) + ' outcome' + str(history_count) + ' b\n')
-        elif line == 9 or line == 21 or (line - 3 - 1 - 12 - 45) % 45 == 5:
+        elif line == 9 or (line - 3 - 1 - 12) % 45 == 5:
              descriptionFileWriter.write(str(line - 2) + ' velocity_x' + str(history_count) + ' n\n')
-        elif line == 10 or line == 22 or (line - 3 - 1 - 12 - 45) % 45 == 6:
+        elif line == 10 or (line - 3 - 1 - 12) % 45 == 6:
              descriptionFileWriter.write(str(line - 2) + ' velocity_y' + str(history_count) + ' n\n')
-        elif line == 11 or line == 23 or (line - 3 - 1 - 12 - 45) % 45 == 7:
+        elif line == 11 or (line - 3 - 1 - 12) % 45 == 7:
              descriptionFileWriter.write(str(line - 2) + ' time_remain' + str(history_count) + ' n\n')
-        elif line == 12 or line == 24 or (line - 3 - 1 - 12 - 45) % 45 == 8:
+        elif line == 12 or (line - 3 - 1 - 12) % 45 == 8:
              descriptionFileWriter.write(str(line - 2) + ' duration' + str(history_count) + ' n\n')
-        elif line == 13 or line == 25 or (line - 3 - 1 - 12 - 45) % 45 == 9:
+        elif line == 13 or (line - 3 - 1 - 12) % 45 == 9:
              descriptionFileWriter.write(str(line - 2) + ' home' + str(history_count) + ' b\n')
-        elif line == 14 or line == 26 or (line - 3 - 1 - 12 - 45) % 45 == 10:
+        elif line == 14 or (line - 3 - 1 - 12) % 45 == 10:
              descriptionFileWriter.write(str(line - 2) + ' away' + str(history_count) + ' b\n')
-        elif line == 15 or line == 27 or (line - 3 - 1 - 12 - 45) % 45 == 11:
+        elif line == 15 or (line - 3 - 1 - 12) % 45 == 11:
              descriptionFileWriter.write(str(line - 2) + ' angle2gate' + str(history_count) + ' n\n')
         else: # actions
             index = (line - 3 - 1 - 12 - 12) % 45
