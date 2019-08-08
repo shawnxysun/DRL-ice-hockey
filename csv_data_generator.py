@@ -165,6 +165,7 @@ def generete_csv_header(fileWriter):
     # 1: Q
     # 12: the state features of 1st state, ignore actions
     # 45 * 9: (state features + one hot action) * 9 histories
+    header_str = ''
     history_count = 0
     for line in range(0, 3 + 1 + 12 + 45 * 9):
         if line == 0:
@@ -177,38 +178,40 @@ def generete_csv_header(fileWriter):
             # fileWriter.write('1\n')
             pass
         elif line == 3:
-            fileWriter.write('Q,')
+            header_str = header_str + 'Q,'
         elif line == 4 or (line - 3 - 1 - 12) % 45 == 0:
             history_count += 1
-            fileWriter.write('xAdjCoord' + str(history_count) + ',')
+            header_str = header_str + 'xAdjCoord' + str(history_count) + ','
         elif line == 5 or (line - 3 - 1 - 12) % 45 == 1:
-            fileWriter.write('yAdjCoord' + str(history_count) + ',')
+            header_str = header_str + 'yAdjCoord' + str(history_count) + ','
         elif line == 6 or (line - 3 - 1 - 12) % 45 == 2:
-            fileWriter.write('scoreDifferential' + str(history_count) + ',')
+            header_str = header_str + 'scoreDifferential' + str(history_count) + ','
         elif line == 7 or (line - 3 - 1 - 12) % 45 == 3:
-            fileWriter.write('manpowerSituation' + str(history_count) + ',')
+            header_str = header_str + 'manpowerSituation' + str(history_count) + ','
         elif line == 8 or (line - 3 - 1 - 12) % 45 == 4:
-            fileWriter.write('outcome' + str(history_count) + ',')
+            header_str = header_str + 'outcome' + str(history_count) + ','
         elif line == 9 or (line - 3 - 1 - 12) % 45 == 5:
-            fileWriter.write('velocity_x' + str(history_count) + ',')
+            header_str = header_str + 'velocity_x' + str(history_count) + ','
         elif line == 10 or (line - 3 - 1 - 12) % 45 == 6:
-            fileWriter.write('velocity_y' + str(history_count) + ',')
+            header_str = header_str + 'velocity_y' + str(history_count) + ','
         elif line == 11 or (line - 3 - 1 - 12) % 45 == 7:
-            fileWriter.write('time_remain' + str(history_count) + ',')
+            header_str = header_str + 'time_remain' + str(history_count) + ','
         elif line == 12 or (line - 3 - 1 - 12) % 45 == 8:
-            fileWriter.write('duration' + str(history_count) + ',')
+            header_str = header_str + 'duration' + str(history_count) + ','
         elif line == 13 or (line - 3 - 1 - 12) % 45 == 9:
-            fileWriter.write('home' + str(history_count) + ',')
+            header_str = header_str + 'home' + str(history_count) + ','
         elif line == 14 or (line - 3 - 1 - 12) % 45 == 10:
-            fileWriter.write('away' + str(history_count) + ',')
+            header_str = header_str + 'away' + str(history_count) + ','
         elif line == 15 or (line - 3 - 1 - 12) % 45 == 11:
-            fileWriter.write('angle2gate' + str(history_count) + ',')
+            header_str = header_str + 'angle2gate' + str(history_count) + ','
         else: # actions
             index = (line - 3 - 1 - 12 - 12) % 45
             action = action_all[index]
-            fileWriter.write(action + str(history_count) + ',')
+            header_str = header_str + action + str(history_count) + ','
 
-    fileWriter.write('\n')
+    # [:-1] to remove last comma
+    header_str = header_str[:-1]
+    fileWriter.write(header_str + '\n')
 
 if __name__ == '__main__':
     if not os.path.isdir(Q_data_DIR):
