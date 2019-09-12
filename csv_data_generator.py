@@ -40,8 +40,9 @@ def write_Q_data_txt(fileWriter, Q_values, state_features, action_index):
         # the first 12 elements are state features
         action_index_in_feature = 12 + action_index
 
-        # generate the data only if the action of the current state is what we want
-        if state_features[batch_index][0][action_index_in_feature] > 0:
+        # generate the data only if the action of the current event is what we want
+        # current event is index 9
+        if state_features[batch_index][9][action_index_in_feature] > 0:
 
             # flat the state features of all histories
             state_feature = ''
@@ -49,17 +50,15 @@ def write_Q_data_txt(fileWriter, Q_values, state_features, action_index):
             # for history_index in range(0, 1): # only consider the curent state
                 for feature_index in range(0, len(state_features[batch_index][history_index])):
                     # ignore actions of current state, since we only generate data for 1 action
-                    if history_index == 0 and feature_index >= 12 and feature_index <= 44:
+                    if history_index == 9 and feature_index >= 12:
                         continue
-
-                    # # ignore home_away one hot of current state
-                    # if history_index == 0 and feature_index >= 9 and feature_index <= 10:
-                    #     continue
                     
                     state_feature_value = state_features[batch_index][history_index][feature_index]
 
                     # check if it is action and change action to one-hot
-                    if (feature_index - 12 - 33) % 45 >= 12 and (feature_index - 12 - 33) % 45 <= 44: 
+                    # if (feature_index - 12 - 33) % 45 >= 12 and (feature_index - 12 - 33) % 45 <= 44: 
+                    # print('feature_index: ', feature_index)
+                    if feature_index >= 12: 
                         if state_features[batch_index][history_index][feature_index] > 0:
                             state_feature_value = 1
                         else:
@@ -143,7 +142,23 @@ def generate(sess, model, fileWriter, action_index):
                     model.trace_lengths: trace_t0_batch,
                     model.rnn_input: s_t0_batch})
 
-            write_Q_data_txt(fileWriter, Q_values, s_t0_batch, action_index)
+            # move padding events from the end to the front
+            padding_front_batch = []
+            for state in s_t0_batch:
+                padding_front_state = []
+                for event in state:
+                    # if both event home and away are 0, it's paddings
+                    home = event[9]
+                    away = event[10]
+                    if home == 0 and away == 0:
+                        # the event is padding
+                        padding_front_state.insert(0, event)
+                    else:
+                        padding_front_state.append(event)
+
+                padding_front_batch.append(padding_front_state)
+
+            write_Q_data_txt(fileWriter, Q_values, padding_front_batch, action_index)
 
             s_t0 = s_tl
 
@@ -163,11 +178,11 @@ def generation_start(fileWriter, action_index):
 def generete_csv_header(fileWriter):
     # 3: data file name, NA, which line to start with
     # 1: Q
-    # 12: the state features of 1st state, ignore actions
-    # 45 * 9: (state features + one hot action) * 9 histories
+    # (12 + 33) * 9: (state features + one hot action) * 9 history events
+    # 12: the state features of 1st event, ignore actions
     header_str = ''
-    history_count = 0
-    for line in range(0, 3 + 1 + 12 + 45 * 9):
+    history_count = 10
+    for line in range(0, 3 + 1 + (12 + 33) * 9 + 12):
         if line == 0:
             # fileWriter.write(data_file_name + '\n')
             pass
@@ -179,33 +194,46 @@ def generete_csv_header(fileWriter):
             pass
         elif line == 3:
             header_str = header_str + 'Q,'
-        elif line == 4 or (line - 3 - 1 - 12) % 45 == 0:
-            history_count += 1
+
+        elif line == 4 or (line - 3 - 1) % 45 == 0:
+            history_count = history_count - 1
             header_str = header_str + 'xAdjCoord' + str(history_count) + ','
-        elif line == 5 or (line - 3 - 1 - 12) % 45 == 1:
+
+        elif line == 5 or (line - 3 - 1) % 45 == 1:
             header_str = header_str + 'yAdjCoord' + str(history_count) + ','
-        elif line == 6 or (line - 3 - 1 - 12) % 45 == 2:
+
+        elif line == 6 or (line - 3 - 1) % 45 == 2:
             header_str = header_str + 'scoreDifferential' + str(history_count) + ','
-        elif line == 7 or (line - 3 - 1 - 12) % 45 == 3:
+
+        elif line == 7 or (line - 3 - 1) % 45 == 3:
             header_str = header_str + 'manpowerSituation' + str(history_count) + ','
-        elif line == 8 or (line - 3 - 1 - 12) % 45 == 4:
+
+        elif line == 8 or (line - 3 - 1) % 45 == 4:
             header_str = header_str + 'outcome' + str(history_count) + ','
-        elif line == 9 or (line - 3 - 1 - 12) % 45 == 5:
+
+        elif line == 9 or (line - 3 - 1) % 45 == 5:
             header_str = header_str + 'velocity_x' + str(history_count) + ','
-        elif line == 10 or (line - 3 - 1 - 12) % 45 == 6:
+
+        elif line == 10 or (line - 3 - 1) % 45 == 6:
             header_str = header_str + 'velocity_y' + str(history_count) + ','
-        elif line == 11 or (line - 3 - 1 - 12) % 45 == 7:
+
+        elif line == 11 or (line - 3 - 1) % 45 == 7:
             header_str = header_str + 'time_remain' + str(history_count) + ','
-        elif line == 12 or (line - 3 - 1 - 12) % 45 == 8:
+
+        elif line == 12 or (line - 3 - 1) % 45 == 8:
             header_str = header_str + 'duration' + str(history_count) + ','
-        elif line == 13 or (line - 3 - 1 - 12) % 45 == 9:
+
+        elif line == 13 or (line - 3 - 1) % 45 == 9:
             header_str = header_str + 'home' + str(history_count) + ','
-        elif line == 14 or (line - 3 - 1 - 12) % 45 == 10:
+
+        elif line == 14 or (line - 3 - 1) % 45 == 10:
             header_str = header_str + 'away' + str(history_count) + ','
-        elif line == 15 or (line - 3 - 1 - 12) % 45 == 11:
+
+        elif line == 15 or (line - 3 - 1) % 45 == 11:
             header_str = header_str + 'angle2gate' + str(history_count) + ','
+            
         else: # actions
-            index = (line - 3 - 1 - 12 - 12) % 45
+            index = (line - 3 - 1) % 45 - 12
             action = action_all[index]
             header_str = header_str + action + str(history_count) + ','
 

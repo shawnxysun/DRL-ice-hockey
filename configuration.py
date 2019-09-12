@@ -13,7 +13,7 @@ ITERATE_NUM = 30
 learning_rate = 1e-4
 SPORT = "NHL"
 directory_generated_Q_data = "Q_data"
-# save_mother_dir = "/Users/xiangyusun/Development/Guiliang/DRL-ice-hockey"
+# save_mother_dir = "/Users/xiangyusun/Desktop/"
 save_mother_dir = "/cs/oschulte/xiangyus/DRL-ice-hockey-saves"
 action_all = ['assist',
               'block',
