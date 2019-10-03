@@ -21,7 +21,7 @@ DATA_STORE = "/cs/oschulte/xiangyus/2019-icehockey-data-preprocessed/2018-2019"
 
 DIR_GAMES_ALL = os.listdir(DATA_STORE)
 
-def plot_game_Q_values(Q_values):
+def plot_game_Q_values(game_ID, Q_values):
     event_numbers = range(0, len(Q_values))
 
     # Q_home = [Q_values[i]['home']for i in event_numbers]
@@ -33,6 +33,8 @@ def plot_game_Q_values(Q_values):
     Q_end = [Q_values[i][2] for i in event_numbers]
 
     plt.figure()
+    plot_title = 'game_ID: {}'.format(game_ID)
+    plt.title(plot_title)
     plt.plot(event_numbers, Q_home, label='home')
     plt.plot(event_numbers, Q_away, label='away')
     plt.plot(event_numbers, Q_end, label='end')
@@ -115,7 +117,7 @@ def generate(sess, model, game_ID):
         if terminal:
             break
 
-    plot_game_Q_values(game_Q_values)
+    plot_game_Q_values(game_ID, game_Q_values)
 
 def start(game_ID):
     sess = tf.InteractiveSession()
