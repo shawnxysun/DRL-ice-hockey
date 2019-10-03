@@ -94,7 +94,11 @@ def train_network(sess, model):
 
     game_diff_record_all = []
 
+    epoch = 0
     while True:
+        epoch = epoch + 1
+        print >> sys.stderr, 'epoch {} starts...'.format(epoch)
+
         game_diff_record_dict = {}
         iteration_now = game_number / number_of_total_game + 1
         game_diff_record_dict.update({"Iteration": iteration_now})
@@ -104,8 +108,8 @@ def train_network(sess, model):
             break
         else:
             converge_flag = True
-        for dir_game in DIR_GAMES_ALL:
 
+        for dir_game in DIR_GAMES_ALL:
             if dir_game == '.DS_Store':
                 continue
 
